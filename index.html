@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Plan · Hai Group × agustín.design</title>
+    <meta name="description" content="Panel de trabajo de la implementación de marca, LinkedIn y sitio web de Hai Group.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#F5F5F3">
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&family=Inter:ital,wght@1,200..400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<!-- =======================================================
+     ACCESO
+     ======================================================= -->
+<section class="acceso" id="acceso" hidden>
+    <div class="acceso-caja">
+        <div class="firma">
+            <span class="logo marcas">agustín<span class="punto">.</span>design</span>
+            <span class="por" aria-hidden="true">×</span>
+            <img src="assets/img/hai-group.svg" alt="Hai Group" class="logo-hai">
+        </div>
+        <h1>Plan de trabajo</h1>
+        <p class="gris">Marca, LinkedIn y sitio web. Las tareas viven en Notion.</p>
+        <form id="form-acceso" class="form-acceso" autocomplete="on">
+            <label class="mono etiqueta" for="clave">Clave de acceso</label>
+            <div class="fila-clave">
+                <input type="password" id="clave" name="password" autocomplete="current-password" required>
+                <button type="submit" class="boton negro">Entrar</button>
+            </div>
+            <p class="error mono" id="error-acceso" hidden></p>
+        </form>
+    </div>
+</section>
+
+<!-- =======================================================
+     APLICACIÓN
+     ======================================================= -->
+<div class="app" id="app" hidden>
+
+    <header class="barra">
+        <a href="#hoy" class="lockup" aria-label="Inicio">
+            <span class="logo marcas">agustín<span class="punto">.</span>design</span>
+            <span class="por" aria-hidden="true">×</span>
+            <img src="assets/img/hai-group.svg" alt="Hai Group" class="logo-hai">
+        </a>
+        <nav class="nav" aria-label="Vistas">
+            <a href="#hoy" data-vista="hoy">Hoy</a>
+            <a href="#tareas" data-vista="tareas">Tareas <span class="cuenta mono" id="cuenta-atrasadas" hidden></span></a>
+            <a href="#calendario" data-vista="calendario">Calendario</a>
+            <a href="#pagos" data-vista="pagos">Pagos</a>
+            <a href="#propuesta" data-vista="propuesta">Propuesta</a>
+        </nav>
+        <div class="der mono">
+            <button type="button" class="sync" id="sync" title="Actualizar desde Notion (R)">
+                <i class="punto-estado"></i><span id="sync-texto">Conectando</span>
+            </button>
+            <span class="reloj" id="reloj"></span>
+        </div>
+    </header>
+
+    <main class="main">
+
+        <!-- 01 · HOY -->
+        <section class="vista" id="vista-hoy" data-vista="hoy">
+            <div class="cabecera">
+                <span class="num mono">01 · Hoy</span>
+                <h1 class="titulo-dia" id="titulo-dia"></h1>
+                <p class="gris" id="subtitulo-dia"></p>
+            </div>
+
+            <div class="grilla">
+                <article class="banda-hai esquinas" id="banda-hito">
+                    <img src="assets/img/hai-isotipo-line.svg" alt="" class="banda-iso" aria-hidden="true">
+                    <div class="banda-contenido" id="hito-contenido"></div>
+                </article>
+                <dl class="kpis" id="kpis"></dl>
+            </div>
+
+            <div class="grilla">
+                <div class="col-7">
+                    <div class="bloque-cabeza">
+                        <h2>Foco de hoy</h2>
+                        <span class="mono gris" id="foco-resumen"></span>
+                    </div>
+                    <div class="lista" id="foco"></div>
+                    <div class="bloque-cabeza sub">
+                        <h3>Próximos 7 días</h3>
+                        <button type="button" class="link mono" data-nueva>+ Nueva tarea</button>
+                    </div>
+                    <div class="lista" id="proximos"></div>
+                </div>
+                <div class="col-5">
+                    <div class="bloque-cabeza">
+                        <h2>Hitos</h2>
+                        <span class="mono gris">Lo comprometido</span>
+                    </div>
+                    <ol class="hitos" id="hitos"></ol>
+                    <div class="bloque-cabeza sub">
+                        <h3>Avance por módulo</h3>
+                    </div>
+                    <div class="modulos" id="modulos"></div>
+                </div>
+            </div>
+
+            <div class="bloque">
+                <div class="bloque-cabeza">
+                    <h2>Ruta del proyecto</h2>
+                    <span class="mono gris">De la primera a la última tarea de cada módulo</span>
+                </div>
+                <div class="gantt" id="gantt"></div>
+                <div class="leyenda mono" id="leyenda-gantt"></div>
+            </div>
+
+            <div class="bloque">
+                <div class="bloque-cabeza">
+                    <h2>Carga por semana</h2>
+                    <span class="mono gris">Toca una semana para ver sus tareas</span>
+                </div>
+                <div class="carga-scroll"><div class="carga" id="carga"></div></div>
+                <div class="leyenda mono">
+                    <span><i class="sw" style="--c:var(--teal-700)"></i>Pendientes</span>
+                    <span><i class="sw" style="--c:var(--rojo)"></i>Atrasadas</span>
+                    <span><i class="sw" style="--c:var(--gris-claro)"></i>Hechas</span>
+                    <span><i class="sw rayado"></i>No disponible</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 02 · TAREAS -->
+        <section class="vista" id="vista-tareas" data-vista="tareas" hidden>
+            <div class="cabecera">
+                <span class="num mono">02 · Tareas</span>
+                <h1>Tareas</h1>
+                <p class="gris" id="tareas-resumen"></p>
+            </div>
+
+            <form class="rapida" id="rapida" autocomplete="off">
+                <span class="mas" aria-hidden="true">+</span>
+                <input type="text" id="rapida-titulo" placeholder="Escribe una tarea y presiona Enter" aria-label="Nueva tarea" maxlength="200">
+                <input type="date" id="rapida-fecha" aria-label="Fecha" class="mono">
+                <select id="rapida-cat" aria-label="Módulo" class="mono"></select>
+            </form>
+
+            <div class="filtros">
+                <div class="vistas-rapidas mono" id="vistas-rapidas" role="group" aria-label="Vistas rápidas"></div>
+                <div class="herramientas">
+                    <input type="search" id="buscar" placeholder="Buscar" aria-label="Buscar tarea">
+                    <select id="filtro-cat" aria-label="Filtrar por módulo" class="mono"></select>
+                    <label class="check mono"><input type="checkbox" id="ocultar-hechas"> Ocultar hechas</label>
+                </div>
+            </div>
+
+            <div id="lista-tareas"></div>
+        </section>
+
+        <!-- 03 · CALENDARIO -->
+        <section class="vista" id="vista-calendario" data-vista="calendario" hidden>
+            <div class="cabecera">
+                <span class="num mono">03 · Calendario</span>
+                <h1 id="cal-titulo"></h1>
+                <div class="cal-nav">
+                    <button type="button" class="boton" id="cal-prev" aria-label="Mes anterior">←</button>
+                    <button type="button" class="boton" id="cal-hoy">Hoy</button>
+                    <button type="button" class="boton" id="cal-next" aria-label="Mes siguiente">→</button>
+                </div>
+            </div>
+            <div class="grilla">
+                <div class="col-8">
+                    <div class="cal" id="cal"></div>
+                    <p class="mono gris nota-cal">Arrastra una tarea a otro día para moverla</p>
+                </div>
+                <aside class="col-4 dia-panel" id="dia-panel">
+                    <div class="bloque-cabeza">
+                        <h2 id="dia-titulo"></h2>
+                    </div>
+                    <p class="mono gris" id="dia-periodo"></p>
+                    <div class="lista" id="dia-lista"></div>
+                    <button type="button" class="link mono" id="dia-nueva">+ Agregar tarea este día</button>
+                </aside>
+            </div>
+        </section>
+
+        <!-- 04 · PAGOS -->
+        <section class="vista" id="vista-pagos" data-vista="pagos" hidden>
+            <div class="cabecera">
+                <span class="num mono">04 · Pagos</span>
+                <h1>Boletas y depósitos</h1>
+                <p class="gris">Retención de 15,25% en 2026 y 16% en 2027 (Ley 21.133)</p>
+            </div>
+            <dl class="kpis horizontal" id="pago-kpis"></dl>
+            <div class="bloque">
+                <div class="bloque-cabeza">
+                    <h2>Lo que te llega mes a mes</h2>
+                    <div class="leyenda mono">
+                        <span><i class="sw" style="--c:var(--teal-700)"></i>Pagada</span>
+                        <span><i class="sw" style="--c:var(--teal-400)"></i>Emitida</span>
+                        <span><i class="sw borde"></i>Por emitir</span>
+                    </div>
+                </div>
+                <div class="pagos-grafico" id="pagos-grafico"></div>
+            </div>
+            <div class="bloque">
+                <div class="tabla-scroll">
+                    <table class="tabla">
+                        <thead><tr><th>Mes de trabajo</th><th class="n">Boleta</th><th class="n">Retención</th><th class="n">Te llega</th><th>Depósito</th><th>Estado</th></tr></thead>
+                        <tbody id="pagos-cuerpo"></tbody>
+                        <tfoot id="pagos-pie"></tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="grilla tres notas" id="pagos-notas"></div>
+        </section>
+
+        <!-- 05 · PROPUESTA -->
+        <section class="vista" id="vista-propuesta" data-vista="propuesta" hidden>
+            <div class="cabecera">
+                <span class="num mono">05 · Propuesta</span>
+                <h1>Lo que prometí</h1>
+                <p class="gris">Lo acordado con Hai Group. Los valores están en la <a href="https://claude.ai/artifact/1EwA3jSA97TJvWSTkHRPZM" target="_blank" rel="noopener">presentación ↗</a></p>
+            </div>
+            <div class="grilla tres entregables">
+                <article>
+                    <span class="num mono">A y B · Implementación</span>
+                    <h2>Manual de marca</h2>
+                    <ul><li>Entrevistas</li><li>Análisis de mercado</li><li>Propuesta de valor y propósito</li><li>Manual de marca listo para usar</li></ul>
+                    <p class="mono gris">Descubrimiento hasta el 23 de diciembre · manual el 29 de enero</p>
+                </article>
+                <article>
+                    <span class="num mono">D · Implementación</span>
+                    <h2>Sitio web</h2>
+                    <ul><li>Diseño</li><li>Textos</li><li>Desarrollo</li><li>SEO y analítica</li><li>Formulario y filtro de leads</li></ul>
+                    <p class="mono gris">Publicado el 12 de febrero</p>
+                </article>
+                <article>
+                    <span class="num mono">Mensual · Operación</span>
+                    <h2>Operación</h2>
+                    <ul><li>12 piezas de LinkedIn y 1 artículo al mes</li><li>Programa de voceros</li><li>Las mismas piezas en Instagram</li><li>1 mejora del sitio al mes</li><li>Google Ads desde marzo</li><li>6 agentes de IA de apoyo</li><li>Reunión semanal y reporte mensual</li></ul>
+                    <p class="mono gris">Desde el 3 de diciembre</p>
+                </article>
+            </div>
+            <div class="grilla">
+                <div class="col-6">
+                    <div class="bloque-cabeza"><h2>Condiciones</h2></div>
+                    <dl class="kv">
+                        <dt>Pago</dt><dd>Mensualidad más la implementación en 6 cuotas, de diciembre a mayo. Desde junio queda solo la mensualidad.</dd>
+                        <dt>Facturación</dt><dd>Boleta de honorarios mensual, valores brutos.</dd>
+                        <dt>Término</dt><dd>Aviso de 30 días. Antes del sexto mes se pagan las cuotas pendientes.</dd>
+                        <dt>Propiedad</dt><dd>Todo lo creado es de Hai Group: diseños, código, cuentas y agentes.</dd>
+                        <dt>Se requiere</dt><dd>Aprobación en 48 horas, información y accesos.</dd>
+                        <dt>Terceros</dt><dd>La pauta de Google Ads se paga directo a Google, desde marzo.</dd>
+                        <dt>Conflictos</dt><dd>No atiendo a otras empresas del rubro.</dd>
+                    </dl>
+                </div>
+                <div class="col-6">
+                    <div class="bloque-cabeza"><h2>Anexo · campañas</h2></div>
+                    <dl class="kv">
+                        <dt>Campaña nueva</dt><dd>Perfil del cargo, 3 avisos en Meta y Google, formulario y reporte.</dd>
+                        <dt>Renovación</dt><dd>Hasta 3 avisos nuevos, hasta 3 por campaña, cada 3 o 4 semanas.</dd>
+                        <dt>Pausar</dt><dd>Sin costo.</dd>
+                        <dt>Mínimo</dt><dd>3 campañas nuevas, desde diciembre.</dd>
+                        <dt>Formulario</dt><dd>En haigroup.cl con consentimiento (Ley 21.719).</dd>
+                        <dt>Pauta</dt><dd>La paga Hai Group directo a Meta y Google.</dd>
+                    </dl>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="pie mono">
+        <span class="atajos"><kbd>N</kbd> nueva <kbd>/</kbd> buscar <kbd>1</kbd>–<kbd>5</kbd> vistas <kbd>R</kbd> actualizar</span>
+        <span><a href="https://app.notion.com/p/27aee5ab67d247919e33b97704bdf718" target="_blank" rel="noopener">Abrir la base en Notion ↗</a> · <button type="button" class="link" id="salir">Salir</button></span>
+    </footer>
+
+    <nav class="tabbar mono" aria-label="Vistas">
+        <a href="#hoy" data-vista="hoy">Hoy</a>
+        <a href="#tareas" data-vista="tareas">Tareas</a>
+        <a href="#calendario" data-vista="calendario">Calendario</a>
+        <a href="#pagos" data-vista="pagos">Pagos</a>
+        <a href="#propuesta" data-vista="propuesta">Propuesta</a>
+    </nav>
+</div>
+
+<!-- =======================================================
+     EDITOR (PANEL LATERAL)
+     ======================================================= -->
+<div class="velo" id="velo" hidden></div>
+<aside class="editor" id="editor" role="dialog" aria-modal="true" aria-labelledby="editor-titulo" hidden>
+    <form id="form-tarea" novalidate>
+        <div class="editor-cabeza">
+            <span class="mono gris" id="editor-titulo">Nueva tarea</span>
+            <button type="button" class="link mono" id="editor-cerrar" aria-label="Cerrar">Cerrar · Esc</button>
+        </div>
+        <textarea id="t-titulo" class="t-titulo" rows="2" maxlength="200" placeholder="Nombre de la tarea" aria-label="Nombre de la tarea" required></textarea>
+        <div class="campos">
+            <label class="campo"><span class="mono etiqueta">Fecha</span>
+                <input type="date" id="t-fecha" class="mono">
+            </label>
+            <div class="atajos-fecha mono">
+                <button type="button" data-fecha="0">Hoy</button>
+                <button type="button" data-fecha="1">Mañana</button>
+                <button type="button" data-sumar="1">+1 día</button>
+                <button type="button" data-sumar="7">+1 semana</button>
+            </div>
+            <label class="campo"><span class="mono etiqueta">Módulo</span>
+                <select id="t-cat"></select>
+            </label>
+            <fieldset class="campo">
+                <legend class="mono etiqueta">Estado</legend>
+                <div class="segmentos mono" id="t-estado">
+                    <label><input type="radio" name="estado" value="pendiente"><span>Pendiente</span></label>
+                    <label><input type="radio" name="estado" value="en_curso"><span>En curso</span></label>
+                    <label><input type="radio" name="estado" value="bloqueado"><span>Bloqueado</span></label>
+                    <label><input type="radio" name="estado" value="hecho"><span>Hecho</span></label>
+                </div>
+            </fieldset>
+            <div class="toggles">
+                <label class="check"><input type="checkbox" id="t-prioritaria"> Prioritaria</label>
+                <label class="check"><input type="checkbox" id="t-hito"> Es un hito</label>
+            </div>
+            <label class="campo"><span class="mono etiqueta">Notas</span>
+                <textarea id="t-notas" rows="5" maxlength="2000"></textarea>
+            </label>
+        </div>
+        <p class="error mono" id="editor-error" hidden></p>
+        <div class="editor-pie">
+            <a class="link mono" id="t-notion" href="#" target="_blank" rel="noopener" hidden>Abrir en Notion ↗</a>
+            <button type="button" class="link mono peligro" id="t-borrar" hidden>Borrar</button>
+            <button type="submit" class="boton negro" id="t-guardar">Guardar</button>
+        </div>
+    </form>
+</aside>
+
+<div class="aviso" id="aviso" role="status" aria-live="polite" hidden></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
