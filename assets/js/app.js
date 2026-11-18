@@ -99,7 +99,7 @@
         buscar: '',
         mes: hoy().slice(0, 7),
         dia: hoy(),
-        pendientes: 0, error: null, ultimaCarga: 0,
+        pendientes: 0, escrituras: 0, error: null, ultimaCarga: 0,
         editando: null,
     };
     let clave = leer(K_CLAVE) || '';
@@ -112,7 +112,7 @@
     const orden = (a, b) => (a.date || '9999').localeCompare(b.date || '9999') || (b.priority - a.priority) || (b.milestone - a.milestone) || a.title.localeCompare(b.title, 'es');
 
     const FILTROS = [
-        { id: 'todas', txt: 'Todas', f: () => true, cuenta: abierta },
+        { id: 'todas', txt: 'Todas', f: () => true },
         { id: 'atrasadas', txt: 'Atrasadas', f: atrasada, rojo: true },
         { id: 'semana', txt: 'Esta semana', f: (t) => abierta(t) && t.date && t.date >= hoy() && t.date <= domingo() },
         { id: 'prioritarias', txt: 'Prioritarias', f: (t) => abierta(t) && t.priority },
@@ -147,10 +147,12 @@
     async function cargar() {
         if (!clave || !API || S.pendientes || S.editando) return;
         S.ultimaCarga = Date.now();
+        const version = S.escrituras;
         if (!S.listo) sync('cargando');
         try {
             const d = await api('GET');
-            if (S.pendientes || S.editando) return; // llegó una edición mientras tanto: no pisarla
+            // Si hubo una edición mientras leía, esta lectura es vieja: no pisarla
+            if (S.pendientes || S.editando || version !== S.escrituras) return;
             S.error = null;
             aplicar(d);
             guardarCache();
@@ -163,6 +165,7 @@
 
     async function enviar(op) {
         S.pendientes++;
+        S.escrituras++;
         sync();
         try {
             const r = await api('POST', op);
@@ -287,7 +290,14 @@
         const d = new Date();
         $('#reloj').textContent = `${DIAS_C[d.getDay()]} ${d.getDate()} ${MESES_C[d.getMonth()]} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
         if (!S.pendientes && !S.error && S.listo) sync();
-        if (hoy() !== diaActual) { diaActual = hoy(); render(); }
+        if (hoy() !== diaActual) {
+            // Cambió el día con el panel abierto: lo que apuntaba a "hoy" pasa al nuevo día
+            const antes = diaActual;
+            diaActual = hoy();
+            if (S.dia === antes) { S.dia = diaActual; S.mes = diaActual.slice(0, 7); }
+            if ($('#rapida-fecha').value === antes) $('#rapida-fecha').value = diaActual;
+            render();
+        }
     }
 
     let avisoTimer;
@@ -375,48 +385,48 @@
             banda.innerHTML = `<span class="num mono">Hai Group</span><h2>${S.listo ? 'No quedan hitos pendientes' : 'Cargando'}</h2>`;
         }
 
-        // Indicadores
+        // Avance del proyecto (arriba a la derecha)
         const pct = S.tasks.length ? Math.round((hechas / S.tasks.length) * 100) : 0;
-        const kpi = (filtro, label, valor, extra = '', alerta = false) =>
-            `<div class="kpi${alerta ? ' alerta' : ''}" role="button" tabindex="0" data-accion="filtro" data-filtro="${filtro}"><dt class="mono">${label}<span class="flecha">→</span></dt><dd>${valor}${extra ? `<small>${extra}</small>` : ''}</dd></div>`;
+        $('#avance').innerHTML = S.listo ? `<span class="mono gris">Avance del proyecto</span>
+            <b>${pct}<small>%</small></b>
+            <span class="avance-barra" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Avance del proyecto"><i style="--p:${pct}%"></i></span>
+            <span class="mono gris">${hechas} de ${S.tasks.length} tareas hechas</span>` : '';
+
+        // Indicadores: el cero se apaga, lo atrasado se enciende
+        const kpi = (filtro, label, valor, alerta = false) =>
+            `<button type="button" class="kpi${alerta ? ' alerta' : ''}${valor ? '' : ' cero'}" data-accion="filtro" data-filtro="${filtro}"><span class="kpi-et mono">${label}<span class="flecha" aria-hidden="true">→</span></span><span class="kpi-val">${valor}</span></button>`;
         $('#kpis').innerHTML =
-            kpi('atrasadas', 'Atrasadas', atr.length, '', atr.length > 0) +
-            kpi('semana', 'Esta semana', semana.length, 'abiertas') +
-            kpi('en_curso', 'En curso', enCurso.length) +
-            kpi('todas', 'Avance', `${pct}%`, `${hechas} de ${S.tasks.length}`);
+            kpi('atrasadas', 'Atrasadas', atr.length, atr.length > 0) +
+            kpi('semana', 'Esta semana', semana.length) +
+            kpi('en_curso', 'En curso', enCurso.length);
 
         // Foco de hoy: atrasadas, hoy, en curso y prioritarias de los próximos 3 días
         const limite = sumar(h, 3);
         const foco = abiertas.filter((t) => atrasada(t) || t.date === h || t.status === 'en_curso' || (t.priority && t.date && t.date <= limite)).sort(orden);
-        $('#foco-resumen').textContent = foco.length ? `${foco.length} ${foco.length === 1 ? 'tarea' : 'tareas'}` : '';
+        $('#foco-resumen').textContent = foco.length || '';
+        $('#foco-resumen').hidden = !foco.length;
         $('#foco').innerHTML = lista(foco.slice(0, 10), S.listo ? 'Nada urgente. Buen día para adelantar.' : 'Cargando…') +
             (foco.length > 10 ? `<button type="button" class="link mono vacio" data-accion="filtro" data-filtro="todas">Ver las ${foco.length} en Tareas →</button>` : '');
 
         const enFoco = new Set(foco.map((t) => t.id));
         const prox7 = abiertas.filter((t) => t.date && t.date > h && t.date <= sumar(h, 7) && !enFoco.has(t.id)).sort(orden);
+        $('#prox-resumen').textContent = prox7.length ? `${prox7.length} ${prox7.length === 1 ? 'tarea' : 'tareas'}` : '';
         $('#proximos').innerHTML = lista(prox7, 'Semana despejada.');
 
-        // Hitos
-        $('#hitos').innerHTML = hitos.length ? hitos.map((t) => {
-            const cls = !abierta(t) ? 'hecho' : t === prox ? 'proximo' : atrasada(t) ? 'atrasado' : '';
+        // Hitos: los que vienen (máximo 6); el resto vive en Tareas
+        const vienen = hitos.filter(abierta);
+        const hechosH = hitos.length - vienen.length;
+        const muestra = vienen.slice(0, 6);
+        $('#hitos-todos').textContent = hitos.length ? `Ver los ${hitos.length}` : 'Ver todos';
+        $('#hitos').innerHTML = (muestra.length ? muestra.map((t) => {
+            const cls = t === prox ? 'proximo' : atrasada(t) ? 'atrasado' : '';
             return `<li><button type="button" class="hito ${cls}" data-accion="abrir" data-id="${esc(t.id)}">
                 <span class="h-fecha mono">${t.date ? corta(t.date) : 'Sin fecha'}</span>
                 <span class="h-titulo">${esc(t.title)}</span>
-                <span class="h-falta mono">${!abierta(t) ? 'Hecho' : t.date ? faltan(t.date) : ''}</span>
+                <span class="h-falta mono">${t.date ? faltan(t.date) : ''}</span>
             </button></li>`;
-        }).join('') : '<li class="vacio">Marca tareas como hito para verlas aquí.</li>';
-
-        // Avance por módulo
-        const porMod = MODULOS.map((m) => {
-            const ts = S.tasks.filter((t) => t.module === m.id);
-            return { m, total: ts.length, hechas: ts.filter((t) => !abierta(t)).length };
-        }).filter((x) => x.total);
-        $('#modulos').innerHTML = porMod.map(({ m, total, hechas: hh }) =>
-            `<button type="button" class="mod" data-accion="modulo" data-modulo="${esc(m.id)}">
-                <span class="modulo"><i class="dot" style="--c:${m.c}"></i>${esc(m.corto)}</span>
-                <span class="mod-barra"><i style="--c:${m.c};--p:${(hh / total) * 100}%"></i></span>
-                <span class="mono">${hh}/${total}</span>
-            </button>`).join('');
+        }).join('') : `<li class="vacio">${hitos.length ? 'Todos los hitos están hechos.' : 'Marca tareas como hito para verlas aquí.'}</li>`) +
+            (hechosH || vienen.length > muestra.length ? `<li class="hitos-pie mono gris">${hechosH ? `${hechosH} ${hechosH === 1 ? 'hecho' : 'hechos'}` : ''}${hechosH && vienen.length > muestra.length ? ' · ' : ''}${vienen.length > muestra.length ? `${vienen.length - muestra.length} más adelante` : ''}</li>` : '');
 
         renderGantt();
         renderCarga();
@@ -455,7 +465,7 @@
             const hh = ts.filter((t) => !abierta(t)).length;
             const hitos = ts.filter((t) => t.milestone).map((t) => `<span class="g-hito${abierta(t) ? '' : ' hecho'}" style="left:${pos(t.date) + (pos(sumar(t.date, 1)) - pos(t.date)) / 2}%" title="${esc(t.title)} · ${corta(t.date)}"></span>`).join('');
             return `<div class="g-fila">
-                <button type="button" class="g-label" data-accion="modulo" data-modulo="${esc(m.id)}"><i class="dot" style="--c:${m.c}"></i>${esc(m.corto)}</button>
+                <button type="button" class="g-label" data-accion="modulo" data-modulo="${esc(m.id)}"><i class="dot" style="--c:${m.c}"></i><span class="g-nombre">${esc(m.corto)}</span><span class="g-cuenta mono${hh === ts.length ? ' completo' : ''}">${hh}/${ts.length}</span></button>
                 <div class="g-pista">
                     <span class="g-barra" style="--c:${m.c};left:${pos(a)}%;width:${pos(b) - pos(a)}%" title="${esc(m.corto)}: ${corta(a)} al ${corta(fs[fs.length - 1])} · ${hh} de ${ts.length} hechas"><i style="--p:${(hh / ts.length) * 100}%"></i></span>
                     ${hitos}
@@ -464,7 +474,7 @@
         }).join('');
 
         el.innerHTML = `<div class="g-tabla"><div class="g-meses">${meses}</div><div class="g-capa">${capa}</div>${filas}</div>`;
-        $('#leyenda-gantt').innerHTML = '<span><i class="sw" style="--c:var(--teal-700)"></i>Hecho</span><span><i class="sw" style="--c:color-mix(in srgb, var(--teal-700) 32%, transparent)"></i>Pendiente</span><span><i class="sw rombo"></i>Hito</span><span><i class="sw rayado"></i>No disponible</span><span><i class="sw linea"></i>Hoy</span>';
+        $('#leyenda-gantt').innerHTML = '<span><i class="sw" style="--c:var(--teal-700)"></i>Hecho</span><span><i class="sw pendiente" style="--c:var(--teal-700)"></i>Pendiente</span><span><i class="sw rombo"></i>Hito</span><span><i class="sw rayado"></i>No disponible</span><span><i class="sw linea"></i>Hoy</span>';
     }
 
     function renderCarga() {
@@ -620,17 +630,20 @@
             return;
         }
         const calc = (p) => { const ret = Math.round(p.bruto * p.tasa / 100); return { ret, neto: p.bruto - ret }; };
-        const mesHoy = hoy().slice(0, 7);
         const tot = ps.reduce((a, p) => { const c = calc(p); a.bruto += p.bruto; a.ret += c.ret; a.neto += c.neto; return a; }, { bruto: 0, ret: 0, neto: 0 });
         const pagadas = ps.filter((p) => p.estado === 'pagada');
         const cobrado = pagadas.reduce((a, p) => a + calc(p).neto, 0);
 
-        const k = (label, valor, extra = '') => `<div class="kpi"><dt class="mono">${label}</dt><dd>${valor}${extra ? `<small>${extra}</small>` : ''}</dd></div>`;
+        // La próxima boleta es la primera que no está pagada: es lo que hay que mirar
+        const proxima = ps.find((p) => p.estado !== 'pagada');
+        const corto = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(2).replace('.', ',')} M` : `${Math.round(n / 1000)} mil`;
+
+        const k = (label, valor, extra = '', cls = '') => `<div class="kpi${cls}"><span class="kpi-et mono">${label}</span><span class="kpi-val">${valor}</span>${extra ? `<span class="kpi-extra mono">${extra}</span>` : ''}</div>`;
         $('#pago-kpis').innerHTML =
-            k('Boletas del año', clp(tot.bruto)) +
+            (proxima ? k(`Próxima boleta · ${mesLargo(proxima.mes)}`, clp(calc(proxima).neto), `${proxima.estado === 'emitida' ? 'Emitida' : 'Por emitir'} · llega ${esc((proxima.deposito || '').toLowerCase()) || 'al mes siguiente'}`, ' destacado') : k('Próxima boleta', 'Todo pagado', '', ' destacado')) +
+            k('Te llega en el año', clp(tot.neto), `de ${clp(tot.bruto)} en boletas`) +
             k('Retención', clp(tot.ret), 'vuelve en abril') +
-            k('Te llega', clp(tot.neto)) +
-            k('Cobrado', clp(cobrado), `${pagadas.length} de ${ps.length}`);
+            k('Cobrado', clp(cobrado), `${pagadas.length} de ${ps.length} boletas`);
 
         const max = Math.max(...ps.map((p) => calc(p).neto));
         const graf = $('#pagos-grafico');
@@ -638,17 +651,17 @@
         graf.innerHTML = ps.map((p) => {
             const c = calc(p);
             const cls = p.estado === 'pagada' ? 'pagada' : p.estado === 'emitida' ? 'emitida' : 'por-emitir';
-            return `<div class="pg ${cls}${p.mes === mesHoy ? ' actual' : ''}" title="${mesLargo(p.mes)}: ${clp(c.neto)} líquido · ${p.estado}"><span class="monto mono">${Math.round(c.neto / 1000)}k</span><span class="barra-pago" style="--h:${(c.neto / max) * 150}px"></span></div>`;
+            return `<div class="pg ${cls}${p === proxima ? ' proxima' : ''}" title="${mesLargo(p.mes)}: ${clp(c.neto)} líquido · ${p.estado}"><span class="monto mono">${corto(c.neto)}</span><span class="barra-pago" style="--h:${(c.neto / max) * 150}px"></span></div>`;
         }).join('');
         let meses = $('#pagos-meses');
         if (!meses) { meses = document.createElement('div'); meses.id = 'pagos-meses'; meses.className = 'pagos-meses mono'; graf.after(meses); }
         meses.style.setProperty('--n', ps.length);
-        meses.innerHTML = ps.map((p) => { const [y, m] = p.mes.split('-').map(Number); return `<span${p.mes === mesHoy ? ' class="actual"' : ''}>${cap(MESES_C[m - 1])}${m === 1 || p === ps[0] ? ` ${String(y).slice(2)}` : ''}</span>`; }).join('');
+        meses.innerHTML = ps.map((p) => { const [y, m] = p.mes.split('-').map(Number); return `<span${p === proxima ? ' class="actual"' : ''}>${cap(MESES_C[m - 1])}${m === 1 || p === ps[0] ? ` ${String(y).slice(2)}` : ''}</span>`; }).join('');
 
         $('#pagos-cuerpo').innerHTML = ps.map((p) => {
             const c = calc(p);
             const dep = p.estado === 'pagada' && p.pagadaEl ? `Pagada el ${corta(p.pagadaEl)}` : p.deposito || '';
-            return `<tr${p.mes === mesHoy ? ' class="actual"' : ''}>
+            return `<tr${p === proxima ? ' class="actual"' : ''}>
                 <td>${mesLargo(p.mes)}</td>
                 <td class="n">${clp(p.bruto)}</td>
                 <td class="n">${clp(c.ret)} <span class="gris mono">${String(p.tasa).replace('.', ',')}%</span></td>
@@ -679,6 +692,7 @@
         const c = $('#cuenta-atrasadas');
         c.hidden = !atr;
         c.textContent = atr;
+        $('#alerta-tab').hidden = !atr;
         if (S.vista === 'hoy') renderHoy();
         else if (S.vista === 'tareas') renderTareas();
         else if (S.vista === 'calendario') renderCalendario();

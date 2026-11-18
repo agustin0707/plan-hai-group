@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&family=Inter:ital,wght@1,200..400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/css/app.css?v=3">
 </head>
 <body>
 
@@ -68,50 +68,54 @@
 
         <!-- 01 · HOY -->
         <section class="vista" id="vista-hoy" data-vista="hoy">
-            <div class="cabecera">
-                <span class="num mono">01 · Hoy</span>
-                <h1 class="titulo-dia" id="titulo-dia"></h1>
-                <p class="gris" id="subtitulo-dia"></p>
+            <div class="cabecera cabecera-hoy">
+                <div class="cab-texto">
+                    <span class="num mono">01 · Hoy</span>
+                    <h1 class="titulo-dia" id="titulo-dia"></h1>
+                    <p class="gris" id="subtitulo-dia"></p>
+                </div>
+                <div class="avance" id="avance"></div>
             </div>
 
-            <div class="grilla">
-                <article class="banda-hai esquinas" id="banda-hito">
-                    <img src="assets/img/hai-isotipo-line.svg" alt="" class="banda-iso" aria-hidden="true">
-                    <div class="banda-contenido" id="hito-contenido"></div>
-                </article>
-                <dl class="kpis" id="kpis"></dl>
-            </div>
-
-            <div class="grilla">
-                <div class="col-7">
-                    <div class="bloque-cabeza">
+            <div class="grilla hoy-arriba">
+                <section class="col-7 tarjeta foco">
+                    <div class="tarjeta-cabeza">
                         <h2>Foco de hoy</h2>
-                        <span class="mono gris" id="foco-resumen"></span>
+                        <span class="contador mono" id="foco-resumen"></span>
                     </div>
                     <div class="lista" id="foco"></div>
-                    <div class="bloque-cabeza sub">
-                        <h3>Próximos 7 días</h3>
-                        <button type="button" class="link mono" data-nueva>+ Nueva tarea</button>
+                    <button type="button" class="agregar mono" data-nueva>+ Nueva tarea <kbd>N</kbd></button>
+                </section>
+                <div class="col-5 columna-hito">
+                    <article class="banda-hai esquinas" id="banda-hito">
+                        <img src="assets/img/hai-isotipo-line.svg" alt="" class="banda-iso" aria-hidden="true">
+                        <div class="banda-contenido" id="hito-contenido"></div>
+                    </article>
+                    <div class="kpis" id="kpis"></div>
+                </div>
+            </div>
+
+            <div class="grilla">
+                <section class="col-7">
+                    <div class="bloque-cabeza">
+                        <h2>Próximos 7 días</h2>
+                        <span class="mono gris" id="prox-resumen"></span>
                     </div>
                     <div class="lista" id="proximos"></div>
-                </div>
-                <div class="col-5">
+                </section>
+                <section class="col-5">
                     <div class="bloque-cabeza">
                         <h2>Hitos</h2>
-                        <span class="mono gris">Lo comprometido</span>
+                        <button type="button" class="link mono" data-accion="filtro" data-filtro="hitos" id="hitos-todos">Ver todos</button>
                     </div>
                     <ol class="hitos" id="hitos"></ol>
-                    <div class="bloque-cabeza sub">
-                        <h3>Avance por módulo</h3>
-                    </div>
-                    <div class="modulos" id="modulos"></div>
-                </div>
+                </section>
             </div>
 
             <div class="bloque">
                 <div class="bloque-cabeza">
                     <h2>Ruta del proyecto</h2>
-                    <span class="mono gris">De la primera a la última tarea de cada módulo</span>
+                    <span class="mono gris">Avance de cada módulo, de su primera a su última tarea</span>
                 </div>
                 <div class="gantt" id="gantt"></div>
                 <div class="leyenda mono" id="leyenda-gantt"></div>
@@ -193,13 +197,14 @@
                 <h1>Boletas y depósitos</h1>
                 <p class="gris">Retención de 15,25% en 2026 y 16% en 2027 (Ley 21.133)</p>
             </div>
-            <dl class="kpis horizontal" id="pago-kpis"></dl>
+            <div class="kpis horizontal" id="pago-kpis"></div>
             <div class="bloque">
                 <div class="bloque-cabeza">
                     <h2>Lo que te llega mes a mes</h2>
                     <div class="leyenda mono">
                         <span><i class="sw" style="--c:var(--teal-700)"></i>Pagada</span>
                         <span><i class="sw" style="--c:var(--teal-400)"></i>Emitida</span>
+                        <span><i class="sw" style="--c:var(--teal-200)"></i>Próxima</span>
                         <span><i class="sw borde"></i>Por emitir</span>
                     </div>
                 </div>
@@ -273,13 +278,13 @@
     </main>
 
     <footer class="pie mono">
-        <span class="atajos"><kbd>N</kbd> nueva <kbd>/</kbd> buscar <kbd>1</kbd>–<kbd>5</kbd> vistas <kbd>R</kbd> actualizar</span>
+        <span class="atajos"><kbd>N</kbd> nueva <kbd>/</kbd> buscar <kbd>1</kbd> a <kbd>5</kbd> vistas <kbd>R</kbd> actualizar</span>
         <span><a href="https://app.notion.com/p/27aee5ab67d247919e33b97704bdf718" target="_blank" rel="noopener">Abrir la base en Notion ↗</a> · <button type="button" class="link" id="salir">Salir</button></span>
     </footer>
 
     <nav class="tabbar mono" aria-label="Vistas">
         <a href="#hoy" data-vista="hoy">Hoy</a>
-        <a href="#tareas" data-vista="tareas">Tareas</a>
+        <a href="#tareas" data-vista="tareas">Tareas <i class="alerta-tab" id="alerta-tab" hidden></i></a>
         <a href="#calendario" data-vista="calendario">Calendario</a>
         <a href="#pagos" data-vista="pagos">Pagos</a>
         <a href="#propuesta" data-vista="propuesta">Propuesta</a>
@@ -338,7 +343,7 @@
 
 <div class="aviso" id="aviso" role="status" aria-live="polite" hidden></div>
 
-<script src="assets/js/config.js"></script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/config.js?v=3"></script>
+<script src="assets/js/app.js?v=3"></script>
 </body>
 </html>
